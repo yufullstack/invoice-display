@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Invoice</title>
+    <style>
+        .container { max-width: 800px; margin: auto; padding: 20px; border: 1px solid #ccc; }
+        .header, .body, .footer { margin-bottom: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        th { background-color: #f4f4f4; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Blue Mart</h2>
+            <div id="invoice-info"></div>
+        </div>
+        <div class="body">
+            <div id="from-info"></div>
+            <div id="to-info"></div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Unit Price</th>
+                        <th>Quantity</th>
+                        <th>Discount</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+                <tbody id="item-details"></tbody>
+            </table>
+            <div id="amounts"></div>
+        </div>
+        <div class="footer">
+            <p>Scan QR Code to view invoice details online</p>
+        </div>
+    </div>
+
+    <script>
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            var regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            var results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+
+        const data = JSON.parse(getUrlParameter('data'));
+
+        document.getElementById('invoice-info').innerHTML = `
+            <p>Invoice #: ${data.order_id}</p>
+            <p>Order Date: ${data.order_date}</p>
+            <p>Due Date: ${data.due_date}</p>
+        `;
+
+        document.getElementById('from-info').innerHTML = `
+            <h5>From:</h5>
+            <p>${data.employeename}</p>
+            <p>${data.email}</p>
+            <p>+885${data.employee_phone}</p>
+        `;
+
+        if (data.customername) {
+            document.getElementById('to-info').innerHTML = `
+                <h5>To:</h5>
+                <p>${data.customername}</p>
+                <p>${data.address}</p>
+                <p>+885${data.customer_phone}</p>
+            `;
+        } else {
+            document.getElementById('to-info').innerHTML = `
+                <h5>To:</h5>
+                <p>General Customer</p>
+            `;
+        }
+
+        let itemDetailsHTML = '';
+        data.details.forEach(detail => {
+            const productTotal = detail.unitprice * detail.quantity * (1 - detail.discount / 100);
+            itemDetailsHTML += `
+                <tr>
+                    <td>${detail.productname}</td>
+                    <td>${detail.unitprice}</td>
+                    <td>${detail.quantity}</td>
+                    <td>${detail.discount}%</td>
+                    <td>${productTotal.toFixed(2)}</td>
+                </tr>
+            `;
+        });
+        document.getElementById('item-details').innerHTML = itemDetailsHTML;
+
+        document.getElementById('amounts').innerHTML = `
+            <p>Sub-total Amount: $${data.sub_total}</p>
+            <p>Discount: $${data.discount}</p>
+            <h4>Amount Due: $${data.amount_due}</h4>
+        `;
+    </script>
+</body>
+</html>
